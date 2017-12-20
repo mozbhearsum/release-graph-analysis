@@ -1,6 +1,11 @@
 from collections import defaultdict
+import datetime
 import json
 import sys
+
+import dateutil.parser
+
+import matplotlib.pyplot as plt
 
 import numpy
 
@@ -35,6 +40,13 @@ if sys.argv[1] == "gather":
                 break
 
         task_info[task.taskid]["worker"] = task.json["task"]["workerType"]
+        task_info[task.taskid]["scheduled"] = task.scheduled.isoformat()
+        task_info[task.taskid]["started"] = task.started
+        if task_info[task.taskid]["started"]:
+            task_info[task.taskid]["started"] = task_info[task.taskid]["started"].isoformat()
+        task_info[task.taskid]["resolved"] = task.resolved
+        if task_info[task.taskid]["resolved"]:
+            task_info[task.taskid]["resolved"] = task_info[task.taskid]["resolved"].isoformat()
         if task.completed:
             task_info[task.taskid]["completed"] = True
             task_info[task.taskid]["wait_time"] = (task.started - task.scheduled).total_seconds()
@@ -45,7 +57,7 @@ if sys.argv[1] == "gather":
             task_info[task.taskid]["elapsed"] = None
     print(json.dumps(task_info))
 
-elif sys.argv[1] == "report":
+elif sys.argv[1] == "wait_times":
     task_info = json.loads(open(sys.argv[2]).read())
 
     wait_time_by_type = defaultdict()
@@ -74,3 +86,38 @@ elif sys.argv[1] == "report":
             print("    (75th percentile): {}".format(numpy.percentile(wait_times, 75)))
             print("    (min): {}".format(min(wait_times)))
             print("    (max): {}".format(max(wait_times)))
+
+elif sys.argv[1] == "graphs":
+    task_info = json.loads(open(sys.argv[2]).read())
+
+    pending_at_time_by_worker = {}
+    running_at_time_by_worker = {}
+
+    for t in task_info:
+        task_info[t]["scheduled"] = dateutil.parser.parse(task_info[t]["scheduled"])
+        if task_info[t]["started"]:
+            task_info[t]["started"] = dateutil.parser.parse(task_info[t]["started"])
+        if task_info[t]["resolved"]:
+            task_info[t]["resolved"] = dateutil.parser.parse(task_info[t]["resolved"])
+
+    earliest_scheduled = min([i["scheduled"] for i in task_info.values() if i["completed"]])
+    latest_completed = max([i["resolved"] for i in task_info.values() if i["completed"]])
+    interval = datetime.timedelta(seconds=((latest_completed - earliest_scheduled).total_seconds()) / 50)
+
+    current_period = earliest_scheduled
+    while current_period < latest_completed:
+        print("Analyzing at time period: {}".format(current_period))
+        pending_at_time_by_worker[current_period] = defaultdict(int)
+        running_at_time_by_worker[current_period] = defaultdict(int)
+        for i in task_info.values():
+            worker = i["worker"]
+            if i["scheduled"] < current_period and (not i["started"] or i["started"] > current_period):
+                pending_at_time_by_worker[current_period][worker] += 1
+            elif i["started"] and i["started"] < current_period and (not i["resolved"] or i["resolved"] > current_period):
+                running_at_time_by_worker[current_period][worker] += 1
+
+        current_period += interval
+
+    import pprint
+    pprint.pprint(pending_at_time_by_worker)
+    pprint.pprint(running_at_time_by_worker)
