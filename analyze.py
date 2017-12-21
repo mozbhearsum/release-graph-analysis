@@ -135,20 +135,34 @@ elif sys.argv[1] == "graphs":
 
     width = 1/3
     ind = numpy.arange(len(periods))
+
+    # PENDING
+    prop_cycle = plt.rcParams['axes.prop_cycle']
+    colours = prop_cycle.by_key()['color']
+    fig = plt.figure(figsize=(24,24))
+    ax = fig.add_subplot(111)
+    i = 0
+    print(periods)
+    for worker, pending in pending_values_by_worker.items():
+        ax.plot(periods, pending, label=worker, color=colours[i], linewidth=3)
+        i += 1
+    ax.set_xlabel("Pending at time, by worker type")
+    ax.set_ylabel("Count")
+    ax.legend()
+    fig.autofmt_xdate()
+    plt.savefig("pending.png")
+
+    # RUNNING
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colours = prop_cycle.by_key()['color']
     fig = plt.figure()
     ax = fig.add_subplot(111)
     i = 0
     print(periods)
-    for worker, pending in pending_values_by_worker.items():
-        ax.plot(periods, pending, label=worker, color=colours[i])
+    for worker, running in running_values_by_worker.items():
+        ax.plot(periods, running, label=worker, color=colours[i], linewidth=3)
         i += 1
-    ax.set_xlabel("Pending at time, by worker type")
+    ax.set_xlabel("Running at time, by worker type")
     ax.set_ylabel("Count")
-    #ax.set_xticks(ind+(width / len(periods)))
-    #ax.set_xticklabels(periods)
     ax.legend()
-    fig.tight_layout()
     fig.autofmt_xdate()
-    plt.show()
