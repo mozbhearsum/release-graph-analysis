@@ -109,7 +109,6 @@ elif sys.argv[1] == "graphs":
 
     current_period = earliest_scheduled
     while current_period < latest_completed:
-        print("Analyzing at time period: {}".format(current_period))
         periods.append(current_period)
         pending_by_worker = defaultdict(int)
         running_by_worker = defaultdict(int)
@@ -139,29 +138,28 @@ elif sys.argv[1] == "graphs":
     # PENDING
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colours = prop_cycle.by_key()['color']
-    fig = plt.figure(figsize=(22,12))
+    fig = plt.figure(figsize=(22,30))
     ax = fig.add_subplot(211)
     i = 0
-    print(periods)
     for worker, pending in pending_values_by_worker.items():
-        ax.plot(periods, pending, label=worker, color=colours[i], linewidth=3)
+        ax.plot(periods, pending, label=worker, color=colours[i], linewidth=2)
         i += 1
     ax.set_xlabel("Pending at time, by worker type")
     ax.set_ylabel("Count")
-    ax.legend()
+    ax.legend(fontsize='x-large')
 
     # RUNNING
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colours = prop_cycle.by_key()['color']
     ax = fig.add_subplot(212)
     i = 0
-    print(periods)
     for worker, running in running_values_by_worker.items():
-        ax.plot(periods, running, label=worker, color=colours[i], linewidth=3)
+        ax.plot(periods, running, label=worker, color=colours[i], linewidth=2)
         i += 1
     ax.set_xlabel("Running at time, by worker type")
     ax.set_ylabel("Count")
-    ax.legend()
+    ax.legend(fontsize='x-large')
+
     fig.autofmt_xdate()
 
     plt.savefig("times.png")
