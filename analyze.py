@@ -5,6 +5,7 @@ import sys
 
 import dateutil.parser
 
+from cycler import cycler
 import matplotlib.pyplot as plt
 
 import numpy
@@ -90,8 +91,9 @@ elif sys.argv[1] == "wait_times":
 elif sys.argv[1] == "graphs":
     task_info = json.loads(open(sys.argv[2]).read())
 
-    pending_at_time_by_worker = {}
-    running_at_time_by_worker = {}
+    periods = []
+    pending_values_by_worker = defaultdict(list)
+    running_values_by_worker = defaultdict(list)
 
     for t in task_info:
         task_info[t]["scheduled"] = dateutil.parser.parse(task_info[t]["scheduled"])
@@ -100,6 +102,7 @@ elif sys.argv[1] == "graphs":
         if task_info[t]["resolved"]:
             task_info[t]["resolved"] = dateutil.parser.parse(task_info[t]["resolved"])
 
+    all_worker_types = set([i["worker"] for i in task_info.values()])
     earliest_scheduled = min([i["scheduled"] for i in task_info.values() if i["completed"]])
     latest_completed = max([i["resolved"] for i in task_info.values() if i["completed"]])
     interval = datetime.timedelta(seconds=((latest_completed - earliest_scheduled).total_seconds()) / 50)
@@ -107,17 +110,45 @@ elif sys.argv[1] == "graphs":
     current_period = earliest_scheduled
     while current_period < latest_completed:
         print("Analyzing at time period: {}".format(current_period))
-        pending_at_time_by_worker[current_period] = defaultdict(int)
-        running_at_time_by_worker[current_period] = defaultdict(int)
+        periods.append(current_period)
+        pending_by_worker = defaultdict(int)
+        running_by_worker = defaultdict(int)
+        # TODO: problem is that when a worker has no pending/running for a given period, they don't get an entry
+        # in the tally, which means there's a mismatch between ind and the # of values in the list
         for i in task_info.values():
-            worker = i["worker"]
             if i["scheduled"] < current_period and (not i["started"] or i["started"] > current_period):
-                pending_at_time_by_worker[current_period][worker] += 1
+                pending_by_worker[i["worker"]] += 1
             elif i["started"] and i["started"] < current_period and (not i["resolved"] or i["resolved"] > current_period):
-                running_at_time_by_worker[current_period][worker] += 1
+                running_by_worker[i["worker"]] += 1
 
+        for worker, pending in pending_by_worker.items():
+            pending_values_by_worker[worker].append(pending)
+        for worker in all_worker_types:
+            if worker not in pending_by_worker:
+                pending_values_by_worker[worker].append(0)
+        for worker, running in running_by_worker.items():
+            running_values_by_worker[worker].append(running)
+        for worker in all_worker_types:
+            if worker not in running_by_worker:
+                running_values_by_worker[worker].append(0)
         current_period += interval
 
-    import pprint
-    pprint.pprint(pending_at_time_by_worker)
-    pprint.pprint(running_at_time_by_worker)
+    width = 1/3
+    ind = numpy.arange(len(periods))
+    prop_cycle = plt.rcParams['axes.prop_cycle']
+    colours = prop_cycle.by_key()['color']
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    i = 0
+    print(periods)
+    for worker, pending in pending_values_by_worker.items():
+        ax.plot(periods, pending, label=worker, color=colours[i])
+        i += 1
+    ax.set_xlabel("Pending at time, by worker type")
+    ax.set_ylabel("Count")
+    #ax.set_xticks(ind+(width / len(periods)))
+    #ax.set_xticklabels(periods)
+    ax.legend()
+    fig.tight_layout()
+    fig.autofmt_xdate()
+    plt.show()
