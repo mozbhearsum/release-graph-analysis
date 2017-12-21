@@ -6,6 +6,7 @@ import sys
 import dateutil.parser
 
 from cycler import cycler
+import matplotlib
 import matplotlib.pyplot as plt
 
 import numpy
@@ -112,8 +113,8 @@ elif sys.argv[1] == "graphs":
         periods.append(current_period)
         pending_by_worker = defaultdict(int)
         running_by_worker = defaultdict(int)
-        # TODO: problem is that when a worker has no pending/running for a given period, they don't get an entry
-        # in the tally, which means there's a mismatch between ind and the # of values in the list
+        # TODO: problem is that when a worker has no pending/running for a given period, they don"t get an entry
+        # in the tally, which means there"s a mismatch between ind and the # of values in the list
         for i in task_info.values():
             if i["scheduled"] < current_period and (not i["started"] or i["started"] > current_period):
                 pending_by_worker[i["worker"]] += 1
@@ -135,10 +136,11 @@ elif sys.argv[1] == "graphs":
     width = 1/3
     ind = numpy.arange(len(periods))
 
+    matplotlib.rcParams["font.size"] = 24
     # PENDING
-    prop_cycle = plt.rcParams['axes.prop_cycle']
-    colours = prop_cycle.by_key()['color']
-    fig = plt.figure(figsize=(22,30))
+    prop_cycle = plt.rcParams["axes.prop_cycle"]
+    colours = prop_cycle.by_key()["color"]
+    fig = plt.figure(figsize=(36,30))
     ax = fig.add_subplot(211)
     i = 0
     for worker, pending in pending_values_by_worker.items():
@@ -146,11 +148,11 @@ elif sys.argv[1] == "graphs":
         i += 1
     ax.set_xlabel("Pending at time, by worker type")
     ax.set_ylabel("Count")
-    ax.legend(fontsize='x-large')
+    ax.legend(fontsize=20)
 
     # RUNNING
-    prop_cycle = plt.rcParams['axes.prop_cycle']
-    colours = prop_cycle.by_key()['color']
+    prop_cycle = plt.rcParams["axes.prop_cycle"]
+    colours = prop_cycle.by_key()["color"]
     ax = fig.add_subplot(212)
     i = 0
     for worker, running in running_values_by_worker.items():
@@ -158,8 +160,8 @@ elif sys.argv[1] == "graphs":
         i += 1
     ax.set_xlabel("Running at time, by worker type")
     ax.set_ylabel("Count")
-    ax.legend(fontsize='x-large')
+    ax.legend(fontsize=20)
 
     fig.autofmt_xdate()
 
-    plt.savefig("times.png")
+    plt.savefig("times.png", bbox_inches="tight")
