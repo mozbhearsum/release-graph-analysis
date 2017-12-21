@@ -139,8 +139,8 @@ elif sys.argv[1] == "graphs":
     # PENDING
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colours = prop_cycle.by_key()['color']
-    fig = plt.figure(figsize=(24,24))
-    ax = fig.add_subplot(111)
+    fig = plt.figure(figsize=(22,12))
+    ax = fig.add_subplot(211)
     i = 0
     print(periods)
     for worker, pending in pending_values_by_worker.items():
@@ -149,14 +149,11 @@ elif sys.argv[1] == "graphs":
     ax.set_xlabel("Pending at time, by worker type")
     ax.set_ylabel("Count")
     ax.legend()
-    fig.autofmt_xdate()
-    plt.savefig("pending.png")
 
     # RUNNING
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colours = prop_cycle.by_key()['color']
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    ax = fig.add_subplot(212)
     i = 0
     print(periods)
     for worker, running in running_values_by_worker.items():
@@ -166,3 +163,5 @@ elif sys.argv[1] == "graphs":
     ax.set_ylabel("Count")
     ax.legend()
     fig.autofmt_xdate()
+
+    plt.savefig("times.png")
