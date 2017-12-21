@@ -106,7 +106,7 @@ elif sys.argv[1] == "graphs":
     all_worker_types = set([i["worker"] for i in task_info.values()])
     earliest_scheduled = min([i["scheduled"] for i in task_info.values() if i["completed"]])
     latest_completed = max([i["resolved"] for i in task_info.values() if i["completed"]])
-    interval = datetime.timedelta(seconds=((latest_completed - earliest_scheduled).total_seconds()) / 50)
+    interval = datetime.timedelta(seconds=120)
 
     current_period = earliest_scheduled
     while current_period < latest_completed:
@@ -146,7 +146,7 @@ elif sys.argv[1] == "graphs":
     for worker, pending in pending_values_by_worker.items():
         ax.plot(periods, pending, label=worker, color=colours[i], linewidth=2)
         i += 1
-    ax.set_xlabel("Pending at time, by worker type")
+    ax.set_title("Pending, by worker type")
     ax.set_ylabel("Count")
     ax.legend(fontsize=20)
 
@@ -158,7 +158,8 @@ elif sys.argv[1] == "graphs":
     for worker, running in running_values_by_worker.items():
         ax.plot(periods, running, label=worker, color=colours[i], linewidth=2)
         i += 1
-    ax.set_xlabel("Running at time, by worker type")
+    ax.set_title("Running, by worker type")
+    ax.set_xlabel("Time")
     ax.set_ylabel("Count")
     ax.legend(fontsize=20)
 
