@@ -42,7 +42,9 @@ if sys.argv[1] == "gather":
                 break
 
         task_info[task.taskid]["worker"] = task.json["task"]["workerType"]
-        task_info[task.taskid]["scheduled"] = task.scheduled.isoformat()
+        task_info[task.taskid]["scheduled"] = task.scheduled
+        if task_info[task.taskid]["scheduled"]:
+            task_info[task.taskid]["scheduled"] = task.scheduled.isoformat()
         task_info[task.taskid]["started"] = task.started
         if task_info[task.taskid]["started"]:
             task_info[task.taskid]["started"] = task_info[task.taskid]["started"].isoformat()
@@ -97,7 +99,8 @@ elif sys.argv[1] == "graphs":
     running_values_by_worker = defaultdict(list)
 
     for t in task_info:
-        task_info[t]["scheduled"] = dateutil.parser.parse(task_info[t]["scheduled"])
+        if task_info[t]["scheduled"]:
+            task_info[t]["scheduled"] = dateutil.parser.parse(task_info[t]["scheduled"])
         if task_info[t]["started"]:
             task_info[t]["started"] = dateutil.parser.parse(task_info[t]["started"])
         if task_info[t]["resolved"]:
@@ -116,7 +119,7 @@ elif sys.argv[1] == "graphs":
         # TODO: problem is that when a worker has no pending/running for a given period, they don"t get an entry
         # in the tally, which means there"s a mismatch between ind and the # of values in the list
         for i in task_info.values():
-            if i["scheduled"] < current_period and (not i["started"] or i["started"] > current_period):
+            if i["scheduled"] and i["scheduled"] < current_period and (not i["started"] or i["started"] > current_period):
                 pending_by_worker[i["worker"]] += 1
             elif i["started"] and i["started"] < current_period and (not i["resolved"] or i["resolved"] > current_period):
                 running_by_worker[i["worker"]] += 1
